@@ -1,0 +1,36 @@
+version: "3"
+services:
+  traefik:
+    image: "traefik:latest"
+    command: -c /dev/null --web --docker --logLevel=DEBUG
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  redis:
+    image: "redis:latest"
+    restart: always
+    labels:
+      - "traefik.enable=false"
+  mongo:
+    image: "mongo:latest"
+    restart: always
+    labels:
+      - "traefik.enable=false"
+  elasticsearch:
+    image: "elasticsearch:5"
+    restart: always
+    environment:
+      ES_JAVA_OPTS: "-Xms256m -Xmx256m"
+    labels:
+      - "traefik.enable=false"
+  keycloak:
+    image: "jboss/keycloak:latest"
+    restart: always
+    env_file: etc/keycloak.env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/auth/"]
+    labels:
+      - "traefik.port=8080"
+      - "traefik.frontend.rule=PathPrefix:/auth"
