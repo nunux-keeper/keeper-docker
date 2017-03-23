@@ -1,7 +1,10 @@
-die() { echo "$@" 1>&2 ; exit 1; }
+die() { echo "Error: $@" 1>&2 ; exit 1; }
 
 kcadm=$JBOSS_HOME/bin/kcadm.sh
-output=/opt/jboss/output
+output=/var/opt/keycloak
+www=/var/opt/www
+
+baseurl=http://keycloak:8080
 
 realm=$KC_REALM_NAME
 [ -z "$realm" ] && die "Realm not set. Beware to call this script with Make!"
@@ -9,7 +12,7 @@ realm=$KC_REALM_NAME
 #########################################
 # Login
 #########################################
-$kcadm config credentials --server $KC_SERVER_BASEURL/auth --realm master --user $KEYCLOAK_USER --password $KEYCLOAK_PASSWORD
+$kcadm config credentials --server $baseurl/auth --realm master --user $KEYCLOAK_USER --password $KEYCLOAK_PASSWORD
 [ $? = 0 ] || die "Unable to login"
 
 #########################################
@@ -25,7 +28,7 @@ fi
 #########################################
 # Clean output dir
 #########################################
-rm $output/{*.pem,*.json} 2> /dev/null
+rm $output/{*.pem,keycloak.json} 2> /dev/null
 [ $? = 0 ] && echo "Output directory cleaned!"
 
 #########################################
@@ -138,6 +141,7 @@ rm $output/pub.tmp
 jq ".keys[0].certificate" -r $output/keys.json > $output/cert.tmp
 sed -e "1 i -----BEGIN CERTIFICATE-----" -e "$ a -----END CERTIFICATE-----" $output/cert.tmp > $output/cert.pem
 rm $output/cert.tmp
+rm $output/keys.json
 
 #########################################
 # Getting adapter configuration file
@@ -145,8 +149,9 @@ rm $output/cert.tmp
 echo "Get adapter configuration file..."
 $kcadm get clients/$client_id/installation/providers/keycloak-oidc-keycloak-json \
   -r $realm \
-  | jq ".[\"auth-server-url\"]=\"$KC_SERVER_EXT_BASEURL/auth\"" \
+  | jq ".[\"auth-server-url\"]=\"$PUBLIC_BASEURL/auth\"" \
   > $output/keycloak.json
 [ $? = 0 ] || die "Unable to get configuration file"
+mv $output/keycloak.json $www/keycloak.json
 
 echo "Keycloak successfully configured."

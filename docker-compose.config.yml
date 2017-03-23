@@ -1,0 +1,33 @@
+version: "3"
+services:
+  #######################################
+  # Build web app to the 'www' volume
+  #######################################
+  build-webapp:
+    image: "ncarlier/keeper-web-app:latest"
+    command: ["run", "build"]
+    user: root
+    env_file: etc/keeper-web-app.env
+    volumes:
+      - www-data:/usr/src/app/build
+    labels:
+      - "traefik.enable=false"
+
+  #######################################
+  # Configure Keycloak (Client, Users)
+  #######################################
+  keycloak-config:
+    build: ./dockerfiles/keycloak
+    image: "ncarlier/keeper-keycloak-config:latest"
+    entrypoint: "/bin/bash"
+    command: ["-c", "/opt/jboss/setup-keycloak.sh"]
+    user: root
+    depends_on:
+      - keycloak
+    env_file: etc/keycloak.env
+    volumes:
+      - conf-data:/var/opt/keycloak
+      - www-data:/var/opt/www
+    labels:
+      - "traefik.enable=false"
+

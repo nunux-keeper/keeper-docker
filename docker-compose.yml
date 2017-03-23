@@ -1,23 +1,40 @@
 version: "3"
 services:
+  #######################################
+  # Reverse proxy (Traefik)
+  #######################################
   traefik:
     image: "traefik:latest"
     command: -c /dev/null --web --docker --logLevel=DEBUG
     ports:
-      - "80:80"
-      - "8080:8080"
+      - "${PORT:-80}:80"
+      - "${RPROXY_PORT:-8080}:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      - "traefik.enable=false"
+
+  #######################################
+  # Redis
+  #######################################
   redis:
     image: "redis:latest"
     restart: always
     labels:
       - "traefik.enable=false"
+
+  #######################################
+  # Database (Mongo)
+  #######################################
   mongo:
     image: "mongo:latest"
     restart: always
     labels:
       - "traefik.enable=false"
+
+  #######################################
+  # Searchengine (ElasticSearch)
+  #######################################
   elasticsearch:
     image: "elasticsearch:5"
     restart: always
@@ -25,12 +42,24 @@ services:
       ES_JAVA_OPTS: "-Xms256m -Xmx256m"
     labels:
       - "traefik.enable=false"
+
+  #######################################
+  # IAM (Keycloak)
+  #######################################
   keycloak:
     image: "jboss/keycloak:latest"
     restart: always
     env_file: etc/keycloak.env
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/auth/"]
+      interval: 5s
+      timeout: 2s
+      retries: 15
     labels:
       - "traefik.port=8080"
       - "traefik.frontend.rule=PathPrefix:/auth"
+
+volumes:
+  conf-data:
+  www-data:
+  storage-data:

@@ -58,6 +58,9 @@ in order to see what parameters can you change to fit your needs.
 Beware that some parameters can break this automatic setup and should not be
 modified.
 
+By default the application is configured to be hosted on http://localhost. If
+you want to change this you can edit the `.env` file.
+
 ## Usage
 
 Once started, Yous can access to those URL:
@@ -101,9 +104,9 @@ You have to increase this system properties and restart some services:
 
 ```
 sudo sysctl -w vm.max_map_count=262144
-docker-compose -f docker-compose.yml -f docker-compose.app.yml restart elasticsearch
-docker-compose -f docker-compose.yml -f docker-compose.app.yml restart keeper-core-api
-docker-compose -f docker-compose.yml -f docker-compose.app.yml restart keeper-job-worker
+make restart service=elasticsearch
+make restart service=keeper-core-api
+make restart service=keeper-job-worker
 ```
 
 [docker]: https://docs.docker.com/engine/installation/

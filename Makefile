@@ -1,8 +1,5 @@
 .SILENT :
-.PHONY : help up down wait config config-keycloak restart logs
-
-# Get Makefile root dir
-ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+.PHONY : help up down logs restart wait config config-keycloak build-webap
 
 ## This help screen
 help:
@@ -33,14 +30,10 @@ wait:
 
 ## Configure keycloak
 config-keycloak:
-	docker run --rm -it \
-		--entrypoint=/bin/bash \
-		--env-file=$(ROOT_DIR)/etc/keycloak.env \
-		-u root:root \
-		-v $(ROOT_DIR)/bin/setup-keycloak.sh:/opt/jboss/setup.sh \
-		-v $(ROOT_DIR)/var/config:/opt/jboss/output \
-		jboss/keycloak:latest \
-		/opt/jboss/setup.sh
+	docker-compose \
+		-f docker-compose.yml \
+		-f docker-compose.config.yml \
+		run keycloak-config
 
 ## Config a service ($$service)
 config: wait
@@ -57,29 +50,26 @@ restart:
 
 ## View service logs ($$service)
 logs:
-	echo "Restarting service: $(service) ..."
+	echo "Viewing $(service) service logs ..."
 	docker-compose \
 		-f docker-compose.yml \
 		-f docker-compose.app.yml \
-		logs $(service)
+		logs -f $(service)
 
 ## Build Web App
 build-webapp:
 	echo "Building Web App..."
-	docker run --rm -it \
-		--env-file=$(ROOT_DIR)/etc/keeper-web-app.env \
-		-u root:root \
-		-v $(ROOT_DIR)/var/config/keycloak.json:/usr/src/app/public/keycloak.json \
-		-v $(ROOT_DIR)/var/www:/usr/src/app/build \
-		ncarlier/keeper-web-app:latest \
-		run build
+	docker-compose \
+		-f docker-compose.yml \
+		-f docker-compose.config.yml \
+		run build-webapp
 
 ## Setup infrastructure
 up:
 	echo "Setup Nunux Keeper..."
 	docker-compose up -d
-	$(MAKE) config service=keycloak
 	$(MAKE) build-webapp
+	$(MAKE) config service=keycloak
 	docker-compose \
 		-f docker-compose.yml \
 		-f docker-compose.app.yml \
@@ -91,9 +81,8 @@ down:
 	echo "Teardown Nunux Keeper..."
 	docker-compose \
 		-f docker-compose.yml \
+		-f docker-compose.config.yml \
 		-f docker-compose.app.yml \
 		down
-	echo "Nunux Keeeper stopped and removed:"
-	echo ".var/ directory still contains generated data."
-	echo "Manualy remove it if you want to start a fresh installation."
+	echo "Nunux Keeeper stopped and removed."
 
