@@ -21,7 +21,7 @@ Docker host:
 ```bash
 git clone https://github.com/nunux-keeper/keeper-docker.git
 cd keeper-docker
-make up
+make deploy
 ```
 
 This command will setup the following services:
@@ -48,7 +48,7 @@ directory.
 Uninstallation is as simple:
 
 ```bash
-make down
+make undeploy
 ```
 
 ## Configuration
@@ -93,14 +93,14 @@ If you have trouble to start Elasticsearch and you have the following message
 into your logs:
 
 ```
-docker-compose -f docker-compose.yml -f docker-compose.app.yml logs elasticsearch
+make logs service=elasticsearch
 
 ...
 max virtual memory areas vm.max_map_count [65530] is too low, increase to atleast [262144]
 ...
 ```
 
-You have to increase this system properties and restart some services:
+You have to increase this system property and restart some services:
 
 ```
 sudo sysctl -w vm.max_map_count=262144

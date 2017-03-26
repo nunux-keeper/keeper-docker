@@ -1,72 +1,30 @@
 .SILENT :
-.PHONY : help up down logs restart wait config config-keycloak build-webap
+.PHONY : config-keycloak build-webap deploy undeploy
 
-## This help screen
-help:
-	printf "Available targets:\n\n"
-	awk '/^[a-zA-Z\-\_0-9]+:/ { \
-		helpMessage = match(lastLine, /^## (.*)/); \
-		if (helpMessage) { \
-			helpCommand = substr($$1, 0, index($$1, ":")); \
-			helpMessage = substr(lastLine, RSTART + 3, RLENGTH); \
-			printf "%-15s %s\n", helpCommand, helpMessage; \
-		} \
-	} \
-	{ lastLine = $$0 }' $(MAKEFILE_LIST)
+# Compose files
+define COMPOSE_FILES
+	-f docker-compose.yml \
+	-f docker-compose.config.yml \
+	-f docker-compose.app.yml
+endef
 
-## Wait until a service ($$service) is up and running (needs health run flag)
-wait:
-	sid=`docker-compose ps -q $(service)`;\
-	n=30;\
-	while [ $${n} -gt 0 ] ; do\
-		status=`docker inspect --format "{{json .State.Health.Status }}" $${sid}`;\
-		if [ -z $${status} ]; then echo "No status informations."; exit 1; fi;\
-		echo "Waiting for $(service) up and ready ($${status})...";\
-		if [ "\"healthy\"" = $${status} ]; then exit 0; fi;\
-		sleep 2;\
-		n=`expr $$n - 1`;\
-	done;\
-	echo "Timeout" && exit 1
+# Include common Make tasks
+include ./makefiles/help.Makefile
+include ./makefiles/compose.Makefile
 
 ## Configure keycloak
 config-keycloak:
-	docker-compose \
-		-f docker-compose.yml \
-		-f docker-compose.config.yml \
-		run keycloak-config
-
-## Config a service ($$service)
-config: wait
-	echo "Configuring $(service)..."
-	$(MAKE) config-$(service)
-
-## Restart a service ($$service)
-restart:
-	echo "Restarting service: $(service) ..."
-	docker-compose \
-		-f docker-compose.yml \
-		-f docker-compose.app.yml \
-		restart $(service)
-
-## View service logs ($$service)
-logs:
-	echo "Viewing $(service) service logs ..."
-	docker-compose \
-		-f docker-compose.yml \
-		-f docker-compose.app.yml \
-		logs -f $(service)
+	docker-compose $(COMPOSE_FILES) run keycloak-config
 
 ## Build Web App
 build-webapp:
 	echo "Building Web App..."
-	docker-compose \
-		-f docker-compose.yml \
-		-f docker-compose.config.yml \
-		run build-webapp
+	docker-compose $(COMPOSE_FILES) run build-webapp
 
-## Setup infrastructure
-up:
+## Deploy infrastructure to Docker host
+deploy:
 	echo "Setup Nunux Keeper..."
+	cat .env
 	docker-compose up -d
 	$(MAKE) build-webapp
 	$(MAKE) config service=keycloak
@@ -74,15 +32,11 @@ up:
 		-f docker-compose.yml \
 		-f docker-compose.app.yml \
 		up -d
-	echo "Congrats! Nunux Keeeper up and running."
+	echo "Congrats! Nunux Keeper up and running."
 
-## Teardown infrastructure
-down:
+## Teardown infrastructure from Docker host
+undeploy:
 	echo "Teardown Nunux Keeper..."
-	docker-compose \
-		-f docker-compose.yml \
-		-f docker-compose.config.yml \
-		-f docker-compose.app.yml \
-		down
-	echo "Nunux Keeeper stopped and removed."
+	docker-compose $(COMPOSE_FILES) down
+	echo "Nunux Keeper stopped and removed."
 
