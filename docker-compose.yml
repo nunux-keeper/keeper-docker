@@ -4,7 +4,7 @@ services:
   # Reverse proxy (Traefik)
   #######################################
   traefik:
-    image: "traefik:latest"
+    image: "traefik:1.7"
     command: -c /dev/null --web --docker --logLevel=DEBUG
     ports:
       - "${PORT:-80}:80"
@@ -18,7 +18,7 @@ services:
   # Redis
   #######################################
   redis:
-    image: "redis:latest"
+    image: "redis:4"
     restart: always
     labels:
       - "traefik.enable=false"
@@ -27,7 +27,7 @@ services:
   # Database (Mongo)
   #######################################
   mongo:
-    image: "mongo:latest"
+    image: "mongo:3"
     restart: always
     labels:
       - "traefik.enable=false"
