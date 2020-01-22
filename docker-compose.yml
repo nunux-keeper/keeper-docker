@@ -47,7 +47,7 @@ services:
   # IAM (Keycloak)
   #######################################
   keycloak:
-    image: "jboss/keycloak:latest"
+    image: "jboss/keycloak:3.4.3.Final"
     restart: always
     env_file: etc/keycloak.env
     healthcheck:
