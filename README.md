@@ -65,7 +65,7 @@ you want to change this you can edit the `.env` file.
 
 Once started, Yous can access to those URL:
 
-- http://localhost/keycloak : Identity And Access Management service
+- http://localhost/auth : Identity And Access Management service
   (Username/Password: admin/admin)
 - http://localhost/keeper : Nunux Keeper Web App (Username/Password:
   keeper/keeper)
